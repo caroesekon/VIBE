@@ -15,5 +15,5 @@ export default function Layout() {
         <RightSidebar />
       </div>
     </div>
-  )
+  );
 }

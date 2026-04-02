@@ -9,7 +9,7 @@ export default function Privacy() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchContent = async () => {
+    const fetchPrivacy = async () => {
       try {
         const response = await getPublicSettings();
         const privacyContent = response?.data?.privacyPolicy || response?.privacyPolicy || '';
@@ -21,17 +21,32 @@ export default function Privacy() {
         setLoading(false);
       }
     };
-    fetchContent();
+    fetchPrivacy();
   }, []);
 
-  if (loading) return <div className="flex justify-center items-center h-64"><FiLoader className="animate-spin text-primary-600" size={32} /></div>;
-  if (error) return <div className="max-w-4xl mx-auto px-4 py-8"><div className="bg-red-50 text-red-600 p-4 rounded-lg">{error}</div></div>;
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64 bg-white">
+        <FiLoader className="animate-spin text-primary-600" size={32} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-8 bg-white min-h-screen">
+        <div className="bg-red-50 text-red-600 p-4 rounded-lg">{error}</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 md:p-8">
-        <div className="prose dark:prose-invert max-w-none">
-          <ReactMarkdown>{content}</ReactMarkdown>
+    <div className="bg-white min-h-screen">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="bg-white rounded-lg shadow p-6 md:p-8">
+          <div className="prose max-w-none">
+            <ReactMarkdown>{content}</ReactMarkdown>
+          </div>
         </div>
       </div>
     </div>

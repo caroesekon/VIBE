@@ -11,16 +11,20 @@ export default function RightSidebar() {
   const { user } = useAuth()
   const [currentYear] = useState(new Date().getFullYear())
 
-  const { data, isLoading } = useQuery({
+  // Real-time suggestions - refetch every 2 minutes
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ['suggestions'],
     queryFn: getSuggestions,
     staleTime: 2 * 60 * 1000,
+    refetchInterval: 2 * 60 * 1000,
   })
 
-  const { data: storiesData } = useQuery({
+  // Real-time stories - refetch every minute
+  const { data: storiesData, refetch: refetchStories } = useQuery({
     queryKey: ['stories'],
     queryFn: getStories,
     staleTime: 60 * 1000,
+    refetchInterval: 60 * 1000,
   })
 
   const suggestions = data?.data?.data || []
@@ -39,6 +43,12 @@ export default function RightSidebar() {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
           <div className="flex justify-between items-center mb-3">
             <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400">People you may know</h3>
+            <button 
+              onClick={() => refetch()} 
+              className="text-xs text-primary-600 hover:text-primary-700"
+            >
+              Refresh
+            </button>
           </div>
           
           {isLoading ? (
@@ -138,5 +148,5 @@ export default function RightSidebar() {
         </div>
       </div>
     </aside>
-  )
+  );
 }

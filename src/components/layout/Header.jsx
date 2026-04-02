@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
-import { useSocket } from '../../hooks/useSocket'
 import { useUIStore } from '../../store/uiStore'
+import { useSocket } from '../../context/SocketContext'
 import { getUnreadCount } from '../../services/notificationService'
 import { getFriendRequests } from '../../services/friendService'
 import { 
@@ -18,108 +18,101 @@ import {
   FiSettings,
   FiShoppingBag,
   FiSun,
-  FiMoon,
-  FiUser
+  FiMoon
 } from 'react-icons/fi'
 
 export default function Header() {
   const { user, logout, isAuthenticated } = useAuth()
-  const { darkMode, toggleDarkMode } = useUIStore()
+  const { darkMode, toggleDarkMode, unreadCount, pendingRequests, setUnreadCount, setPendingRequests } = useUIStore()
+  const socket = useSocket()
   const navigate = useNavigate()
   const location = useLocation()
-  const socket = useSocket()
   const [showDropdown, setShowDropdown] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [unreadCount, setUnreadCount] = useState(0)
-  const [pendingRequests, setPendingRequests] = useState(0)
 
-  const fetchUnreadCount = async () => {
-    if (!isAuthenticated || !user) return
-    try {
-      const res = await getUnreadCount()
-      setUnreadCount(res.data.data?.count || 0)
-    } catch (error) {
-      console.error('Failed to fetch unread count:', error)
-    }
-  }
-
-  const fetchPendingRequests = async () => {
-    if (!isAuthenticated || !user) return
-    try {
-      const res = await getFriendRequests()
-      const pending = res.data.data?.filter(r => r.status === 'pending') || []
-      setPendingRequests(pending.length)
-    } catch (error) {
-      console.error('Failed to fetch pending requests:', error)
-    }
-  }
-
+  // Initial fetch and periodic refresh
   useEffect(() => {
-    if (isAuthenticated && user) {
-      fetchUnreadCount()
-      fetchPendingRequests()
-      
-      const interval = setInterval(() => {
-        fetchUnreadCount()
-        fetchPendingRequests()
-      }, 30000)
-      
-      return () => clearInterval(interval)
-    }
-  }, [isAuthenticated, user])
+    if (!isAuthenticated || !user) return
 
+    const fetchCounts = async () => {
+      try {
+        const [unreadRes, requestsRes] = await Promise.all([
+          getUnreadCount(),
+          getFriendRequests()
+        ]);
+        setUnreadCount(unreadRes.data.data?.count || 0);
+        const pending = requestsRes.data.data?.filter(r => r.status === 'pending') || [];
+        setPendingRequests(pending.length);
+      } catch (error) {
+        console.error('Failed to fetch counts:', error);
+      }
+    };
+
+    fetchCounts();
+    
+    // Refresh every 30 seconds as fallback
+    const interval = setInterval(fetchCounts, 30000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated, user, setUnreadCount, setPendingRequests]);
+
+  // Socket listeners for real-time updates
   useEffect(() => {
-    if (!socket) return
+    if (!socket) return;
 
     const handleNewNotification = () => {
-      fetchUnreadCount()
-    }
+      setUnreadCount(prev => prev + 1);
+    };
 
     const handleFriendRequest = () => {
-      fetchPendingRequests()
-      fetchUnreadCount()
-    }
+      setPendingRequests(prev => prev + 1);
+    };
 
-    socket.on('new_notification', handleNewNotification)
-    socket.on('friend_request', handleFriendRequest)
-    socket.on('friend_updated', handleFriendRequest)
+    const handleFriendUpdated = () => {
+      // Refresh friend requests count
+      getFriendRequests().then(res => {
+        const pending = res.data.data?.filter(r => r.status === 'pending') || [];
+        setPendingRequests(pending.length);
+      });
+    };
+
+    socket.on('new_notification', handleNewNotification);
+    socket.on('friend_request', handleFriendRequest);
+    socket.on('friend_updated', handleFriendUpdated);
 
     return () => {
-      socket.off('new_notification', handleNewNotification)
-      socket.off('friend_request', handleFriendRequest)
-      socket.off('friend_updated', handleFriendRequest)
-    }
-  }, [socket])
+      socket.off('new_notification', handleNewNotification);
+      socket.off('friend_request', handleFriendRequest);
+      socket.off('friend_updated', handleFriendUpdated);
+    };
+  }, [socket, setUnreadCount, setPendingRequests]);
 
   const handleLogout = async () => {
-    await logout()
-    navigate('/login')
-  }
+    await logout();
+    navigate('/login');
+  };
 
   const handleSearch = (e) => {
-    e.preventDefault()
+    e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
-      setSearchQuery('')
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery('');
     }
-  }
+  };
 
   const isActive = (path) => {
-    if (path === '/') return location.pathname === '/'
-    return location.pathname === path
-  }
+    if (path === '/') return location.pathname === '/';
+    return location.pathname === path;
+  };
 
-  const totalNotifications = unreadCount + pendingRequests
+  const totalNotifications = unreadCount + pendingRequests;
 
-  if (!isAuthenticated || !user) {
-    return null
-  }
+  if (!isAuthenticated || !user) return null;
 
   return (
     <header className="bg-white dark:bg-gray-800 shadow sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
         <div className="flex items-center justify-between h-14 gap-1">
-          {/* Logo - Hide on very small screens */}
+          {/* Logo */}
           <Link to="/" className="flex-shrink-0 flex items-center">
             <div className="h-8 w-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center shadow-md">
               <span className="text-white font-bold text-lg">V</span>
@@ -127,7 +120,7 @@ export default function Header() {
             <span className="text-xl font-bold text-blue-600 hidden sm:inline ml-1">Vibe</span>
           </Link>
 
-          {/* Navigation Icons - Scrollable on mobile */}
+          {/* Navigation Icons */}
           <div className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto scrollbar-hide">
             <Link to="/" className={`p-1.5 sm:p-2 rounded-lg transition-colors ${isActive('/') ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}>
               <FiHome size={20} />
@@ -164,7 +157,6 @@ export default function Header() {
 
           {/* Right Section */}
           <div className="flex items-center gap-1">
-            {/* Dark Mode Toggle */}
             <button
               onClick={toggleDarkMode}
               className="p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -216,7 +208,7 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Search Bar - Below navigation on mobile */}
+        {/* Mobile Search Bar */}
         <div className="py-2 md:hidden">
           <form onSubmit={handleSearch} className="relative">
             <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
@@ -231,5 +223,5 @@ export default function Header() {
         </div>
       </div>
     </header>
-  )
+  );
 }

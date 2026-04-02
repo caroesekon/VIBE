@@ -6,11 +6,12 @@ export const useUIStore = create(
     (set) => ({
       darkMode: false,
       sidebarOpen: true,
+      unreadCount: 0,
+      pendingRequests: 0,
 
       toggleDarkMode: () => {
         set((state) => {
           const newDarkMode = !state.darkMode;
-          // Apply dark mode class to html element
           if (newDarkMode) {
             document.documentElement.classList.add('dark');
           } else {
@@ -31,6 +32,9 @@ export const useUIStore = create(
 
       toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
+      
+      setUnreadCount: (count) => set({ unreadCount: count }),
+      setPendingRequests: (count) => set({ pendingRequests: count }),
     }),
     {
       name: 'ui-storage',

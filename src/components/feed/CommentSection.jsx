@@ -19,29 +19,100 @@ export default function CommentSection({ postId }) {
 
   const createMutation = useMutation({
     mutationFn: (content) => createComment({ postId, content }),
+    onMutate: async (content) => {
+      await queryClient.cancelQueries(['comments', postId])
+      const previousComments = queryClient.getQueryData(['comments', postId])
+      
+      queryClient.setQueryData(['comments', postId], (old) => {
+        if (!old) return old
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            data: [
+              {
+                _id: Date.now().toString(),
+                user: { _id: user._id, name: user.name, avatar: user.avatar },
+                content,
+                likes: [],
+                createdAt: new Date().toISOString(),
+                isOptimistic: true
+              },
+              ...old.data.data
+            ]
+          }
+        }
+      })
+      return { previousComments }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['comments', postId])
       queryClient.invalidateQueries(['feed'])
       setNewComment('')
-      toast.success('Comment added')
     },
-    onError: () => toast.error('Failed to add comment'),
+    onError: (err, _, context) => {
+      queryClient.setQueryData(['comments', postId], context.previousComments)
+      toast.error('Failed to add comment')
+    }
   })
 
   const deleteMutation = useMutation({
     mutationFn: (commentId) => deleteComment(commentId),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['comments', postId])
-      queryClient.invalidateQueries(['feed'])
-      toast.success('Comment deleted')
+    onMutate: async (commentId) => {
+      await queryClient.cancelQueries(['comments', postId])
+      const previousComments = queryClient.getQueryData(['comments', postId])
+      
+      queryClient.setQueryData(['comments', postId], (old) => {
+        if (!old) return old
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            data: old.data.data.filter(c => c._id !== commentId)
+          }
+        }
+      })
+      return { previousComments }
     },
+    onError: (err, _, context) => {
+      queryClient.setQueryData(['comments', postId], context.previousComments)
+      toast.error('Failed to delete comment')
+    }
   })
 
   const likeMutation = useMutation({
     mutationFn: (commentId) => likeComment(commentId),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['comments', postId])
+    onMutate: async (commentId) => {
+      await queryClient.cancelQueries(['comments', postId])
+      const previousComments = queryClient.getQueryData(['comments', postId])
+      
+      queryClient.setQueryData(['comments', postId], (old) => {
+        if (!old) return old
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            data: old.data.data.map(c => {
+              if (c._id === commentId) {
+                const isLiked = c.liked || c.likes?.includes(user._id)
+                return {
+                  ...c,
+                  liked: !isLiked,
+                  likes: isLiked 
+                    ? (c.likes || []).filter(id => id !== user._id)
+                    : [...(c.likes || []), user._id]
+                }
+              }
+              return c
+            })
+          }
+        }
+      })
+      return { previousComments }
     },
+    onError: (err, _, context) => {
+      queryClient.setQueryData(['comments', postId], context.previousComments)
+    }
   })
 
   const comments = data?.data?.data || []
