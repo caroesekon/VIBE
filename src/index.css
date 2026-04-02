@@ -1,0 +1,366 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-100 text-gray-900;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Reaction animations */
+@keyframes bounce {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Reaction popup styles */
+.reaction-popup {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.reaction-popup button {
+  transition: transform 0.2s ease;
+}
+
+.reaction-popup button:hover {
+  transform: scale(1.2);
+  animation: bounce 0.3s ease;
+}
+
+/* Story viewer animations */
+.story-progress {
+  transition: width 0.1s linear;
+}
+
+/* Modal animations */
+.modal-enter {
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Loading spinner */
+.loading-spinner {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Post image hover effect */
+.post-image {
+  transition: opacity 0.2s ease;
+}
+
+.post-image:hover {
+  opacity: 0.95;
+}
+
+/* Comment section styles */
+.comment-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+/* Message bubble animations */
+.message-bubble {
+  animation: slideIn 0.2s ease-out;
+}
+
+/* Notification badge pulse */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.notification-badge {
+  animation: pulse 2s infinite;
+}
+
+/* Story ring animation */
+@keyframes ring {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.story-ring {
+  animation: ring 2s ease-in-out infinite;
+}
+
+/* Reaction button hover effect */
+.reaction-btn {
+  transition: all 0.2s ease;
+}
+
+.reaction-btn:hover {
+  transform: scale(1.1);
+}
+
+/* Dropdown animations */
+.dropdown-enter {
+  animation: fadeIn 0.15s ease-out;
+}
+
+/* Sidebar link hover */
+.sidebar-link {
+  transition: background-color 0.2s ease;
+}
+
+/* Card hover effect */
+.card-hover {
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.card-hover:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Button transitions */
+.btn-transition {
+  transition: all 0.2s ease;
+}
+
+/* Image gallery grid */
+.image-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+/* Story viewer overlay */
+.story-overlay {
+  background: rgba(0, 0, 0, 0.95);
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .story-container {
+    padding: 0 8px;
+  }
+  
+  .post-card {
+    margin-bottom: 12px;
+  }
+  
+  .comment-section {
+    padding-left: 40px;
+  }
+}
+
+/* Dark mode support (optional - can be enabled later) */
+/* .dark {
+  color-scheme: dark;
+} */
+
+/* Reaction emoji size */
+.reaction-emoji {
+  font-size: 24px;
+  line-height: 1;
+}
+
+/* Reaction popup container */
+.reactions-container {
+  background: white;
+  border-radius: 9999px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 8px 12px;
+  gap: 8px;
+}
+
+/* Post reaction bar */
+.reaction-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Reaction count display */
+.reaction-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Reaction icons hover */
+.reaction-icon {
+  transition: transform 0.15s ease;
+}
+
+.reaction-icon:hover {
+  transform: scale(1.15);
+}
+
+/* Loading states */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Toast customization */
+.toast-success {
+  background: #10b981;
+  color: white;
+}
+
+.toast-error {
+  background: #ef4444;
+  color: white;
+}
+
+.toast-info {
+  background: #3b82f6;
+  color: white;
+}
+
+/* Focus ring */
+.focus-ring:focus {
+  outline: none;
+  ring: 2px solid #3b82f6;
+  ring-offset: 2px;
+}
+
+/* Disabled state */
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Line clamp utilities */
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.line-clamp-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+/* Scrollbar hide (for mobile) */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Glass effect */
+.glass {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+}
+
+/* Story progress bar */
+.story-progress-bar {
+  transition: width 0.1s linear;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 2px;
+}
+/* Hide scrollbar for Chrome, Safari and Opera */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
