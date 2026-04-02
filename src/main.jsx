@@ -1,33 +1,31 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from 'react-hot-toast';
-import App from './App';
-import './index.css';
-import { useUIStore } from './store/uiStore';
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Toaster } from 'react-hot-toast'
+import App from './App'
+import './index.css'
+import { useAuthStore } from './store/authStore'
+import { useUIStore } from './store/uiStore'
 
-// Initialize dark mode BEFORE rendering
-const savedUi = localStorage.getItem('ui-storage');
+// Initialize dark mode from localStorage
+const savedUi = localStorage.getItem('ui-storage')
 if (savedUi) {
   try {
-    const parsed = JSON.parse(savedUi);
+    const parsed = JSON.parse(savedUi)
     if (parsed.state?.darkMode) {
-      document.documentElement.classList.add('dark');
+      document.documentElement.classList.add('dark')
     } else {
-      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.remove('dark')
     }
   } catch (e) {
-    // Check system preference
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      document.documentElement.classList.add('dark');
+      document.documentElement.classList.add('dark')
     }
   }
 } else {
   if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    document.documentElement.classList.add('dark');
-    // Update store to match
-    useUIStore.getState().setDarkMode(true);
+    document.documentElement.classList.add('dark')
   }
 }
 
@@ -38,20 +36,30 @@ const queryClient = new QueryClient({
       retry: 1,
     },
   },
-});
+})
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter
-        future={{
-          v7_startTransition: true,
-          v7_relativeSplatPath: true,
-        }}
-      >
-        <App />
-        <Toaster position="top-right" />
-      </BrowserRouter>
-    </QueryClientProvider>
-  </React.StrictMode>
-);
+// Initialize auth store and then render
+const renderApp = () => {
+  ReactDOM.createRoot(document.getElementById('root')).render(
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true,
+          }}
+        >
+          <App />
+          <Toaster position="top-right" />
+        </BrowserRouter>
+      </QueryClientProvider>
+    </React.StrictMode>
+  )
+}
+
+// Initialize auth and then render
+useAuthStore.getState().init().then(() => {
+  renderApp()
+}).catch(() => {
+  renderApp()
+})

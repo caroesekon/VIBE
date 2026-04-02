@@ -14,27 +14,33 @@ export const useAuthStore = create(
 
       init: async () => {
         const token = getAccessToken()
+        const refresh = getRefreshToken()
+        
         if (token) {
           try {
-            const res = await api.get('/auth/me', {
-              headers: { Authorization: `Bearer ${token}` }
-            })
+            api.defaults.headers.common['Authorization'] = `Bearer ${token}`
+            
+            const res = await api.get('/auth/me')
             set({
               user: res.data.data,
               accessToken: token,
-              refreshToken: getRefreshToken(),
+              refreshToken: refresh,
               isAuthenticated: true,
               isLoading: false
             })
+            return true
           } catch (error) {
-            // Token invalid, try refresh
+            console.error('Init auth error:', error)
             const refreshed = await get().refreshToken()
             if (!refreshed) {
               get().logout()
             }
+            set({ isLoading: false })
+            return false
           }
         } else {
           set({ isLoading: false })
+          return false
         }
       },
 
@@ -42,7 +48,10 @@ export const useAuthStore = create(
         try {
           const res = await api.post('/auth/login', { identifier, password })
           const { accessToken, refreshToken, user } = res.data.data
+          
           setTokens(accessToken, refreshToken)
+          api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`
+          
           set({
             user,
             accessToken,
@@ -52,6 +61,7 @@ export const useAuthStore = create(
           })
           return { success: true }
         } catch (error) {
+          console.error('Login error:', error)
           return {
             success: false,
             message: error.response?.data?.message || 'Login failed'
@@ -63,7 +73,10 @@ export const useAuthStore = create(
         try {
           const res = await api.post('/auth/register', { name, email, password, phone })
           const { accessToken, refreshToken, user } = res.data.data
+          
           setTokens(accessToken, refreshToken)
+          api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`
+          
           set({
             user,
             accessToken,
@@ -73,6 +86,7 @@ export const useAuthStore = create(
           })
           return { success: true }
         } catch (error) {
+          console.error('Register error:', error)
           return {
             success: false,
             message: error.response?.data?.message || 'Registration failed'
@@ -82,21 +96,19 @@ export const useAuthStore = create(
 
       logout: async () => {
         try {
-          await api.post('/auth/logout', {}, {
-            headers: { Authorization: `Bearer ${get().accessToken}` }
-          })
+          await api.post('/auth/logout')
         } catch (error) {
           // Ignore errors on logout
-        } finally {
-          clearTokens()
-          set({
-            user: null,
-            accessToken: null,
-            refreshToken: null,
-            isAuthenticated: false,
-            isLoading: false
-          })
         }
+        delete api.defaults.headers.common['Authorization']
+        clearTokens()
+        set({
+          user: null,
+          accessToken: null,
+          refreshToken: null,
+          isAuthenticated: false,
+          isLoading: false
+        })
       },
 
       refreshToken: async () => {
@@ -110,9 +122,10 @@ export const useAuthStore = create(
           
           const newAccessToken = res.data.accessToken
           setTokens(newAccessToken, refreshToken)
+          api.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`
+          
           set({ accessToken: newAccessToken, isAuthenticated: true })
           
-          // Re-fetch user
           const userRes = await api.get('/auth/me', {
             headers: { Authorization: `Bearer ${newAccessToken}` }
           })
@@ -120,6 +133,7 @@ export const useAuthStore = create(
           
           return true
         } catch (error) {
+          console.error('Refresh token error:', error)
           return false
         }
       },
@@ -138,9 +152,12 @@ export const useAuthStore = create(
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        console.log('Auth store rehydrated:', state?.isAuthenticated)
+        if (state?.accessToken) {
+          api.defaults.headers.common['Authorization'] = `Bearer ${state.accessToken}`
+        }
+      }
     }
   )
 )
-
-// Auto-initialize
-useAuthStore.getState().init()

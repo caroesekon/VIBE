@@ -1,8 +1,8 @@
 import { Navigate, Outlet } from 'react-router-dom'
-import { useAuth } from '../../hooks/useAuth'
+import { useAuthStore } from '../../store/authStore'
 
 export default function PrivateRoute() {
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isAuthenticated, isLoading } = useAuthStore()
 
   if (isLoading) {
     return (
